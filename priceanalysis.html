@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Price Analysis | StreetVendor Analytics</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #1cc88a;
+            --dark-color: #5a5c69;
+            --light-color: #f8f9fc;
+            --danger-color: #e74a3b;
+            --warning-color: #f6c23e;
+            --info-color: #36b9cc;
+        }
+
+        body {
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: #333;
+            padding-top: 72px;
+            overflow-x: hidden;
+            background-color: var(--light-color); /* Added background color for consistency */
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+        }
+
+        .section-title {
+            position: relative;
+            display: inline-block;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background-color: var(--primary-color);
+        }
+
+        /* Navbar specific styles for consistency */
+        .navbar-brand {
+            font-weight: 700;
+        }
+        .nav-link {
+            font-weight: 500;
+        }
+
+        /* Chart container styling */
+        .chart-container {
+            position: relative;
+            height: 400px; /* Fixed height for the chart */
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        /* Card styling */
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 767.98px) {
+            body {
+                padding-top: 56px;
+            }
+            .chart-container {
+                height: 300px; /* Adjust height for smaller screens */
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav id="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-utensils me-2"></i>StreetVendor Analytics
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html#hero">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#price-analysis">Price Analysis</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="leftover-exchange.html">Leftover Exchange</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="delivery-sharing.html">Delivery Sharing</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="vendor-rating.html">Vendor Rating</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="interactive-map.html">Interactive Map</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="whatsapp-integration.html">WhatsApp Integration</a>
+                    </li>
+                    <li class="nav-item ms-lg-3">
+                        <a class="btn btn-primary" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">
+                            <i class="fas fa-sign-in-alt me-1"></i> Login
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Price Analysis Section -->
+    <section id="price-analysis" class="py-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="section-title animate__animated animate__fadeInDown">Ingredient Price Analysis</h2>
+                <p class="lead animate__animated animate__fadeInUp">Track daily ingredient prices across suppliers with interactive charts and historical data.</p>
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card animate__animated animate__fadeInUp">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">Price Trends Over Time</h4>
+                        </div>
+                        <div class="card-body">
+                            <form id="priceFilterForm" class="mb-4">
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-md-6">
+                                        <label for="ingredientSelect" class="form-label">Select Ingredient</label>
+                                        <select class="form-select" id="ingredientSelect">
+                                            <option value="potato" selected>Potato</option>
+                                            <option value="onion">Onion</option>
+                                            <option value="tomato">Tomato</option>
+                                            <option value="flour">Flour</option>
+                                            <option value="oil">Cooking Oil</option>
+                                            <option value="chilli">Green Chilli</option>
+                                            <option value="ginger">Ginger</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="timeRange" class="form-label">Time Range</label>
+                                        <select class="form-select" id="timeRange">
+                                            <option value="7">Last 7 Days</option>
+                                            <option value="30" selected>Last 30 Days</option>
+                                            <option value="90">Last 90 Days</option>
+                                            <option value="180">Last 6 Months</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="submit" class="btn btn-primary w-100">Apply</button>
+                                    </div>
+                                </div>
+                            </form>
+                            <div class="chart-container">
+                                <canvas id="priceTrendChart"></canvas>
+                            </div>
+                            <div class="text-center mt-3">
+                                <small class="text-muted">Data updated daily from local suppliers and market sources.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row justify-content-center mt-5">
+                <div class="col-lg-10">
+                    <div class="card animate__animated animate__fadeInUp" data-animation-delay="0.2s">
+                        <div class="card-header bg-secondary text-white">
+                            <h4 class="mb-0">Supplier Price Comparison (Current)</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Supplier</th>
+                                            <th>Ingredient</th>
+                                            <th>Current Price (₹/kg)</th>
+                                            <th>Last Week Avg. (₹/kg)</th>
+                                            <th>Change</th>
+                                            <th>Rating</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="supplierPriceTableBody">
+                                        <!-- Data will be dynamically loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h5 class="text-uppercase mb-4">StreetVendor Analytics</h5>
+                    <p>Empowering street food vendors with data-driven insights to maximize profits and reduce costs.</p>
+                    <div class="mt-4">
+                        <a href="#" class="btn btn-outline-light btn-sm me-2"><i class="fab fa-apple me-1"></i> App Store</a>
+                        <a href="#" class="btn btn-outline-light btn-sm"><i class="fab fa-google-play me-1"></i> Play Store</a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4 mb-md-0">
+                    <h5 class="text-uppercase mb-4">Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="index.html#hero" class="text-white">Home</a></li>
+                        <li class="mb-2"><a href="#price-analysis" class="text-white">Price Analysis</a></li>
+                        <li class="mb-2"><a href="leftover-exchange.html" class="text-white">Leftover Exchange</a></li>
+                        <li class="mb-2"><a href="delivery-sharing.html" class="text-white">Delivery Sharing</a></li>
+                        <li class="mb-2"><a href="vendor-rating.html" class="text-white">Vendor Rating</a></li>
+                        <li class="mb-2"><a href="interactive-map.html" class="text-white">Interactive Map</a></li>
+                        <li><a href="whatsapp-integration.html" class="text-white">WhatsApp Integration</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
+                    <h5 class="text-uppercase mb-4">Features</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#price-analysis" class="text-white">Price Analysis</a></li>
+                        <li class="mb-2"><a href="leftover-exchange.html" class="text-white">Leftover Exchange</a></li>
+                        <li class="mb-2"><a href="delivery-sharing.html" class="text-white">Delivery Sharing</a></li>
+                        <li class="mb-2"><a href="vendor-rating.html" class="text-white">Supplier Ratings</a></li>
+                        <li><a href="whatsapp-integration.html" class="text-white">WhatsApp Integration</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <h5 class="text-uppercase mb-4">Newsletter</h5>
+                    <p>Subscribe to get updates on new features and tips to maximize your profits.</p>
+                    <form class="mt-3">
+                        <div class="input-group mb-3">
+                            <input type="email" class="form-control" placeholder="Your Email" aria-label="Your Email">
+                            <button class="btn btn-primary" type="button">Subscribe</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <hr class="my-4 bg-secondary">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="mb-0">&copy; 2023 StreetVendor Analytics. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <a href="#" class="text-white me-3">Privacy Policy</a>
+                    <a href="#" class="text-white me-3">Terms of Service</a>
+                    <a href="#" class="text-white">FAQ</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Login Modal (reused from main page) -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="loginModalLabel">Vendor Login</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="loginEmail" class="form-label">Email or Phone</label>
+                            <input type="text" class="form-control" id="loginEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="loginPassword" required>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="rememberMe">
+                            <label class="form-check-label" for="rememberMe">Remember me</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Login</button>
+                    </form>
+                    <div class="text-center mt-3">
+                        <p class="mb-1">Or login with</p>
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="#" class="btn btn-outline-primary" aria-label="Login with Google"><i class="fab fa-google"></i></a>
+                            <a href="#" class="btn btn-outline-primary" aria-label="Login with Facebook"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#" class="btn btn-outline-primary" aria-label="Login with WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                        </div>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="#" class="text-decoration-none">Forgot password?</a>
+                        <p class="mt-2">Don't have an account? <a href="#" data-bs-toggle="modal" data-bs-target="#registerModal" data-bs-dismiss="modal" class="text-primary">Register</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal (reused from main page) -->
+    <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="registerModalLabel">Vendor Registration</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="registerForm">
+                        <div class="mb-3">
+                            <label for="registerName" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="registerName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerEmail" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="registerEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPhone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="registerPhone" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerBusiness" class="form-label">Business Name</label>
+                            <input type="text" class="form-control" id="registerBusiness" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerLocation" class="form-label">Business Location</label>
+                            <input type="text" class="form-control" id="registerLocation" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="registerPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerConfirmPassword" class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" id="registerConfirmPassword" required>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="agreeTerms" required>
+                            <label class="form-check-label" for="agreeTerms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Register</button>
+                    </form>
+                    <div class="text-center mt-3">
+                        <p>Already have an account? <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal" data-bs-dismiss="modal" class="text-primary">Login</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Sample data for charts and tables
+            const ingredientData = {
+                potato: {
+                    labels: ['Day 1', 'Day 5', 'Day 10', 'Day 15', 'Day 20', 'Day 25', 'Day 30'],
+                    prices: {
+                        'Fresh Farms': [30, 28, 32, 35, 34, 28, 25],
+                        'Local Market': [32, 30, 34, 37, 36, 30, 27],
+                        'City Wholesale': [28, 26, 30, 33, 32, 26, 23.75]
+                    },
+                    suppliers: [
+                        { name: 'Fresh Farms', currentPrice: 25.00, lastWeekAvg: 29.5, change: -4.5, rating: 4.5 },
+                        { name: 'Local Market', currentPrice: 27.50, lastWeekAvg: 32.0, change: -4.5, rating: 4.0 },
+                        { name: 'City Wholesale', currentPrice: 23.75, lastWeekAvg: 28.0, change: -4.25, rating: 5.0 }
+                    ]
+                },
+                onion: {
+                    labels: ['Day 1', 'Day 5', 'Day 10', 'Day 15', 'Day 20', 'Day 25', 'Day 30'],
+                    prices: {
+                        'Fresh Farms': [40, 38, 42, 45, 50, 48, 42],
+                        'Local Market': [42, 40, 44, 47, 52, 50, 44],
+                        'City Wholesale': [38, 36, 40, 43, 48, 46, 40]
+                    },
+                    suppliers: [
+                        { name: 'Fresh Farms', currentPrice: 42.00, lastWeekAvg: 46.0, change: -4.0, rating: 4.0 },
+                        { name: 'Local Market', currentPrice: 44.00, lastWeekAvg: 48.0, change: -4.0, rating: 3.5 },
+                        { name: 'City Wholesale', currentPrice: 40.00, lastWeekAvg: 44.0, change: -4.0, rating: 4.5 }
+                    ]
+                },
+                tomato: {
+                    labels: ['Day 1', 'Day 5', 'Day 10', 'Day 15', 'Day 20', 'Day 25', 'Day 30'],
+                    prices: {
+                        'Fresh Farms': [60, 55, 50, 45, 40, 50, 55],
+                        'Local Market': [62, 57, 52, 47, 42, 52, 57],
+                        'City Wholesale': [58, 53, 48, 43, 38, 48, 53]
+                    },
+                    suppliers: [
+                        { name: 'Fresh Farms', currentPrice: 55.00, lastWeekAvg: 48.0, change: 7.0, rating: 3.0 },
+                        { name: 'Local Market', currentPrice: 57.00, lastWeekAvg: 50.0, change: 7.0, rating: 3.0 },
+                        { name: 'City Wholesale', currentPrice: 53.00, lastWeekAvg: 46.0, change: 7.0, rating: 4.0 }
+                    ]
+                },
+                flour: {
+                    labels: ['Day 1', 'Day 5', 'Day 10', 'Day 15', 'Day 20', 'Day 25', 'Day 30'],
+                    prices: {
+                        'Fresh Farms': [35, 35, 36, 36, 35, 34, 35],
+                        'Local Market': [36, 36, 37, 37, 36, 35, 36],
+                        'City Wholesale': [34, 34, 35, 35, 34, 33, 34]
+                    },
+                    suppliers: [
+                        { name: 'Fresh Farms', currentPrice: 35.00, lastWeekAvg: 35.5, change: -0.5, rating: 4.5 },
+                        { name: 'Local Market', currentPrice: 36.00, lastWeekAvg: 36.5, change: -0.5, rating: 4.0 },
+                        { name: 'City Wholesale', currentPrice: 34.00, lastWeekAvg: 34.5, change: -0.5, rating: 5.0 }
+                    ]
+                },
+                oil: {
+                    labels: ['Day 1', 'Day 5', 'Day 10', 'Day 15', 'Day 20', 'Day 25', 'Day 30'],
+                    prices: {
+                        'Fresh Farms': [120, 125, 130, 128, 125, 123, 120],
+                        'Local Market': [122, 127, 132, 130, 127, 125, 122],
+                        'City Wholesale': [118, 123, 128, 126, 123, 121, 118]
+                    },
+                    suppliers: [
+                        { name: 'Fresh Farms', currentPrice: 120.00, lastWeekAvg: 125.0, change: -5.0, rating: 4.0 },
+                        { name: 'Local Market', currentPrice: 122.00, lastWeekAvg: 127.0, change: -5.0, rating: 3.5 },
+                        { name: 'City Wholesale', currentPrice: 118.00, lastWeekAvg: 123.0, change: -5.0, rating: 4.5 }
+                    ]
+                },
+                chilli: {
+                    labels: ['Day 1', 'Day 5', 'Day 10', 'Day 15', 'Day 20', 'Day 25', 'Day 30'],
+                    prices: {
+                        'Fresh Farms': [80, 75, 70, 65, 70, 72, 78],
+                        'Local Market': [82, 77, 72, 67, 72, 74, 80],
+                        'City Wholesale': [78, 73, 68, 63, 68, 70, 76]
+                    },
+                    suppliers: [
+                        { name: 'Fresh Farms', currentPrice: 78.00, lastWeekAvg: 72.0, change: 6.0, rating: 3.5 },
+                        { name: 'Local Market', currentPrice: 80.00, lastWeekAvg: 74.0, change: 6.0, rating: 3.0 },
+                        { name: 'City Wholesale', currentPrice: 76.00, lastWeekAvg: 70.0, change: 6.0, rating: 4.0 }
+                    ]
+                },
+                ginger: {
+                    labels: ['Day 1', 'Day 5', 'Day 10', 'Day 15', 'Day 20', 'Day 25', 'Day 30'],
+                    prices: {
+                        'Fresh Farms': [90, 88, 92, 95, 90, 85, 80],
+                        'Local Market': [92, 90, 94, 97, 92, 87, 82],
+                        'City Wholesale': [88, 86, 90, 93, 88, 83, 78]
+                    },
+                    suppliers: [
+                        { name: 'Fresh Farms', currentPrice: 80.00, lastWeekAvg: 90.0, change: -10.0, rating: 4.0 },
+                        { name: 'Local Market', currentPrice: 82.00, lastWeekAvg: 92.0, change: -10.0, rating: 3.5 },
+                        { name: 'City Wholesale', currentPrice: 78.00, lastWeekAvg: 88.0, change: -10.0, rating: 4.5 }
+                    ]
+                }
+            };
+
+            // Chart initialization
+            const ctx = document.getElementById('priceTrendChart').getContext('2d');
+            let priceTrendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [], // Will be updated
+                    datasets: [] // Will be updated
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // Allow chart to fill container
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Price (₹/kg or ₹/liter)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time Period'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Function to update chart and table
+            function updatePriceData() {
+                const selectedIngredient = $('#ingredientSelect').val();
+                const selectedTimeRange = $('#timeRange').val();
+                const data = ingredientData[selectedIngredient];
+
+                if (!data) return;
+
+                // Update Chart
+                const labels = data.labels.slice(-selectedTimeRange); // Adjust labels based on time range
+                const datasets = Object.keys(data.prices).map((supplier, index) => {
+                    const color = ['#4e73df', '#1cc88a', '#f6c23e'][index % 3]; // Cycle through colors
+                    return {
+                        label: `${supplier} (${selectedIngredient.charAt(0).toUpperCase() + selectedIngredient.slice(1)} Price)`,
+                        data: data.prices[supplier].slice(-selectedTimeRange),
+                        borderColor: color,
+                        backgroundColor: `${color}1A`, // Light transparent background
+                        tension: 0.4,
+                        fill: true
+                    };
+                });
+
+                priceTrendChart.data.labels = labels;
+                priceTrendChart.data.datasets = datasets;
+                priceTrendChart.update();
+
+                // Update Supplier Comparison Table
+                const tableBody = $('#supplierPriceTableBody');
+                tableBody.empty(); // Clear existing rows
+
+                data.suppliers.forEach(supplier => {
+                    const changeClass = supplier.change > 0 ? 'text-danger' : (supplier.change < 0 ? 'text-success' : '');
+                    const changeIcon = supplier.change > 0 ? '<i class="fas fa-arrow-up"></i>' : (supplier.change < 0 ? '<i class="fas fa-arrow-down"></i>' : '');
+                    
+                    let starsHtml = '';
+                    const fullStars = Math.floor(supplier.rating);
+                    const hasHalfStar = supplier.rating % 1 !== 0;
+
+                    for (let i = 0; i < fullStars; i++) {
+                        starsHtml += '<i class="fas fa-star text-warning"></i>';
+                    }
+                    if (hasHalfStar) {
+                        starsHtml += '<i class="fas fa-star-half-alt text-warning"></i>';
+                    }
+                    for (let i = 0; i < (5 - fullStars - (hasHalfStar ? 1 : 0)); i++) {
+                        starsHtml += '<i class="far fa-star text-warning"></i>';
+                    }
+
+                    const row = `
+                        <tr>
+                            <td>${supplier.name}</td>
+                            <td>${selectedIngredient.charAt(0).toUpperCase() + selectedIngredient.slice(1)}</td>
+                            <td>₹${supplier.currentPrice.toFixed(2)}</td>
+                            <td>₹${supplier.lastWeekAvg.toFixed(2)} <span class="${changeClass}">${changeIcon} ${Math.abs(supplier.change).toFixed(2)}</span></td>
+                            <td>${starsHtml} (${supplier.rating.toFixed(1)})</td>
+                            <td><button class="btn btn-sm btn-outline-primary" aria-label="Contact ${supplier.name}">Contact</button></td>
+                        </tr>
+                    `;
+                    tableBody.append(row);
+                });
+            }
+
+            // Event listener for form submission
+            $('#priceFilterForm').on('submit', function(e) {
+                e.preventDefault();
+                updatePriceData();
+            });
+
+            // Initial load
+            updatePriceData();
+
+            // Smooth scrolling for anchor links
+            $('a[href*="#"]').on('click', function(e) {
+                e.preventDefault();
+                $('html, body').animate(
+                    {
+                        scrollTop: $($(this).attr('href')).offset().top - 70,
+                    },
+                    500,
+                    'linear'
+                );
+            });
+
+            // Form submission handlers (for modals, reused from main page)
+            $('#loginForm').on('submit', function(e) {
+                e.preventDefault();
+                alert('Login functionality will be implemented in the backend');
+                $('#loginModal').modal('hide');
+            });
+
+            $('#registerForm').on('submit', function(e) {
+                e.preventDefault();
+                alert('Registration functionality will be implemented in the backend');
+                $('#registerModal').modal('hide');
+            });
+        });
+    </script>
+</body>
+</html>

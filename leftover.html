@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreetVendor Analytics | Leftover Exchange</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #1cc88a;
+            --dark-color: #5a5c69;
+            --light-color: #f8f9fc;
+            --danger-color: #e74a3b;
+            --warning-color: #f6c23e;
+            --info-color: #36b9cc;
+        }
+
+        body {
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: #333;
+            padding-top: 72px;
+            background-color: var(--light-color);
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+        }
+
+        .section-title {
+            position: relative;
+            display: inline-block;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background-color: var(--primary-color);
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px; /* Consistent height for charts */
+            width: 100%;
+        }
+
+        .map-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            background-image: url('https://placehold.co/800x400/ADD8E6/000000?text=Local+Area+Map'); /* Placeholder map image */
+            background-size: cover;
+            background-position: center;
+        }
+
+        .map-pin {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 16px;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            border: 2px solid white;
+            transition: all 0.3s ease;
+        }
+
+        .map-pin:hover {
+            background-color: var(--secondary-color);
+            transform: translate(-50%, -50%) scale(1.2);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Custom message box styles */
+        .custom-alert-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1050;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+
+        .custom-alert-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .custom-alert-box {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .custom-alert-overlay.show .custom-alert-box {
+            transform: translateY(0);
+        }
+
+        .custom-alert-box h5 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .custom-alert-box p {
+            margin-bottom: 25px;
+        }
+
+        .custom-alert-box button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .custom-alert-box button:hover {
+            background-color: #3a5ccc;
+        }
+
+        /* Animations */
+        .animate__animated {
+            visibility: hidden; /* Hide elements initially for animation */
+        }
+        .animate__animated.animate__visible {
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+    <!-- Custom Alert Message Box -->
+    <div id="customAlert" class="custom-alert-overlay">
+        <div class="custom-alert-box">
+            <h5 id="customAlertTitle">Alert</h5>
+            <p id="customAlertMessage">This is a custom alert message.</p>
+            <button id="customAlertClose">OK</button>
+        </div>
+    </div>
+
+<!-- Navigation -->
+<nav id="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="f.html">
+      <i class="fas fa-utensils me-2"></i>StreetVendor Analytics
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+      aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="f.html">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="priceanalysis.html">Price Analysis</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="leftover.html">Leftover Exchange</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="deliveryshare.html">Delivery Sharing</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="vendorrate.html">Vendor Rating</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="map.html">Interactive Map</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="whatsapp.html">WhatsApp Integration</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+    <!-- Leftover Exchange Section -->
+    <section id="leftover-exchange" class="py-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="section-title animate__animated animate__fadeInDown">Leftover Ingredient Exchange</h2>
+                <p class="lead animate__animated animate__fadeInUp animate__delay-1s">Reduce waste and save money by exchanging excess ingredients with nearby vendors.</p>
+            </div>
+
+            <div class="row g-4 mb-5">
+                <div class="col-lg-6">
+                    <div class="card h-100 animate__animated animate__fadeInLeft animate__delay-2s">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary mb-3">Your Available Leftovers</h5>
+                            <form id="addLeftoverForm">
+                                <div class="mb-3">
+                                    <label for="leftoverItem" class="form-label">Ingredient</label>
+                                    <input type="text" class="form-control" id="leftoverItem" placeholder="e.g., 5kg Onions" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="leftoverPrice" class="form-label">Price (₹/unit)</label>
+                                    <input type="number" class="form-control" id="leftoverPrice" placeholder="e.g., 20" step="0.01" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="leftoverExpiry" class="form-label">Expiry Date</label>
+                                    <input type="date" class="form-control" id="leftoverExpiry" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Add to Exchange</button>
+                            </form>
+                            <hr>
+                            <h6 class="mt-4">Currently Listed:</h6>
+                            <ul class="list-group" id="currentLeftovers">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    10kg Potatoes <span class="badge bg-info">₹20/kg</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    2kg Tomatoes <span class="badge bg-info">₹45/kg</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card h-100 animate__animated animate__fadeInRight animate__delay-3s">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary mb-3">Nearby Exchange Opportunities</h5>
+                            <div class="map-container" id="exchangeMap">
+                                <!-- Pins will be added by JS -->
+                                <div class="map-pin" style="top: 25%; left: 30%;" data-vendor="Vendor A" data-item="3kg Garlic" data-price="30">A</div>
+                                <div class="map-pin" style="top: 60%; left: 70%;" data-vendor="Vendor B" data-item="5L Cooking Oil" data-price="110">B</div>
+                                <div class="map-pin" style="top: 40%; left: 50%;" data-vendor="Vendor C" data-item="15kg Flour" data-price="32">C</div>
+                            </div>
+                            <p class="text-muted text-center mt-3">
+                                <i class="fas fa-map-marker-alt me-1"></i> Click on pins to see available items from nearby vendors.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="card h-100 animate__animated animate__fadeInUp animate__delay-4s">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary mb-3">Exchange Activity Trends</h5>
+                            <div class="chart-container">
+                                <canvas id="exchangeActivityChart"></canvas>
+                            </div>
+                            <p class="text-muted text-center mt-3">
+                                <i class="fas fa-chart-bar me-1"></i> Monthly overview of successful exchanges.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card h-100 animate__animated animate__fadeInUp animate__delay-5s">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary mb-3">Top Exchanged Ingredients</h5>
+                            <div class="chart-container">
+                                <canvas id="topIngredientsChart"></canvas>
+                            </div>
+                            <p class="text-muted text-center mt-3">
+                                <i class="fas fa-pie-chart me-1"></i> See which ingredients are most frequently exchanged.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2023 StreetVendor Analytics. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Custom Alert Function
+        function showAlert(title, message) {
+            $('#customAlertTitle').text(title);
+            $('#customAlertMessage').text(message);
+            $('#customAlert').addClass('show');
+        }
+
+        $(document).ready(function() {
+            // Close custom alert
+            $('#customAlertClose').on('click', function() {
+                $('#customAlert').removeClass('show');
+            });
+
+            // Function to generate a vibrant color palette
+            function generateVibrantColors(numColors) {
+                const colors = [];
+                for (let i = 0; i < numColors; i++) {
+                    const hue = (i * 137.508) % 360; // Use golden angle approximation for even distribution
+                    colors.push(`hsl(${hue}, 70%, 60%)`); // Saturated, medium lightness
+                }
+                return colors;
+            }
+
+            // Sample data for charts
+            const exchangeActivityData = {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+                datasets: [{
+                    label: 'Exchanges Completed',
+                    data: [15, 20, 25, 18, 22, 30, 28],
+                    backgroundColor: generateVibrantColors(7), // Dynamic vibrant colors
+                    borderColor: '#fff', // White border for contrast
+                    borderWidth: 1
+                }]
+            };
+
+            const topIngredientsData = {
+                labels: ['Potatoes', 'Onions', 'Tomatoes', 'Flour', 'Oil'],
+                datasets: [{
+                    label: 'Exchanges by Ingredient',
+                    data: [30, 25, 15, 10, 20],
+                    backgroundColor: generateVibrantColors(5), // Dynamic vibrant colors
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            };
+
+            // Chart: Exchange Activity Trends (Bar Chart)
+            const activityCtx = document.getElementById('exchangeActivityChart').getContext('2d');
+            new Chart(activityCtx, {
+                type: 'bar',
+                data: exchangeActivityData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 1800, // Longer animation duration
+                        easing: 'easeOutBounce', // More pronounced easing
+                        onComplete: function() {
+                            // Optional: Any actions after animation completes
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + ' exchanges';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Chart: Top Exchanged Ingredients (Doughnut Chart)
+            const ingredientsCtx = document.getElementById('topIngredientsChart').getContext('2d');
+            new Chart(ingredientsCtx, {
+                type: 'doughnut',
+                data: topIngredientsData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        animateScale: true, // Scale animation
+                        animateRotate: true, // Rotate animation
+                        duration: 1800, // Longer animation duration
+                        easing: 'easeOutElastic' // More pronounced easing
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 20
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed) {
+                                        label += context.parsed + '%'; // Assuming data is percentage
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Add Leftover Form Submission
+            $('#addLeftoverForm').on('submit', function(e) {
+                e.preventDefault();
+                const item = $('#leftoverItem').val();
+                const price = $('#leftoverPrice').val();
+                const expiry = $('#leftoverExpiry').val();
+
+                const listItem = `<li class="list-group-item d-flex justify-content-between align-items-center animate__animated animate__fadeInRight">
+                                    ${item} <span class="badge bg-info">₹${price}/unit (exp: ${expiry})</span>
+                                  </li>`;
+                $('#currentLeftovers').append(listItem);
+                showAlert('Leftover Added', `"${item}" listed for exchange!`);
+                $(this).trigger('reset');
+            });
+
+            // Map Pin Click Handler
+            $('.map-pin').on('click', function() {
+                const vendor = $(this).data('vendor');
+                const item = $(this).data('item');
+                const price = $(this).data('price');
+                showAlert('Exchange Opportunity', `<strong>${vendor}</strong> has <strong>${item}</strong> available for ₹${price}/unit. Contact them for exchange!`);
+            });
+
+            // Intersection Observer for animations
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        $(entry.target).addClass('animate__visible');
+                        $(entry.target).removeClass('animate__animated'); // Remove to prevent re-triggering
+                    } else {
+                        // Optionally remove 'animate__visible' if you want animations to replay on scroll back
+                        // $(entry.target).removeClass('animate__visible');
+                        // $(entry.target).addClass('animate__animated');
+                    }
+                });
+            }, { threshold: 0.1 }); // Trigger when 10% of the element is visible
+
+            // Observe all animated elements
+            $('.animate__animated').each(function() {
+                observer.observe(this);
+            });
+        });
+    </script>
+</body>
+</html>

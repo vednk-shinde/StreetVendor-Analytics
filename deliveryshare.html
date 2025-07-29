@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreetVendor Analytics | Delivery Sharing</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #1cc88a;
+            --dark-color: #5a5c69;
+            --light-color: #f8f9fc;
+            --danger-color: #e74a3b;
+            --warning-color: #f6c23e;
+            --info-color: #36b9cc;
+        }
+
+        body {
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: #333;
+            padding-top: 72px;
+            background-color: var(--light-color);
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+        }
+
+        .section-title {
+            position: relative;
+            display: inline-block;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background-color: var(--primary-color);
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Truck Animation Header */
+        .truck-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .truck-header h2 {
+            color: white;
+            z-index: 2;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .truck-animation-container {
+            position: relative;
+            width: 100%;
+            height: 100px; /* Height for the animation track */
+            overflow: hidden;
+        }
+
+        .truck-icon {
+            position: absolute;
+            bottom: 0;
+            left: -100px; /* Start off-screen */
+            font-size: 60px;
+            color: #fff;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            animation: truckMove 15s linear infinite;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .truck-icon .fa-truck {
+            transform: scaleX(-1); /* Flip truck to face right initially */
+        }
+
+        .truck-icon .fa-carrot, .truck-icon .fa-apple-alt {
+            font-size: 30px;
+            color: var(--secondary-color);
+        }
+
+        @keyframes truckMove {
+            0% {
+                left: -100px;
+                transform: translateX(0);
+            }
+            49% {
+                left: calc(100% + 50px);
+                transform: translateX(0);
+            }
+            50% {
+                left: calc(100% + 50px);
+                transform: translateX(-100%) scaleX(-1); /* Flip and move back */
+            }
+            99% {
+                left: -100px;
+                transform: translateX(-100%) scaleX(-1);
+            }
+            100% {
+                left: -100px;
+                transform: translateX(0); /* Reset for next loop */
+            }
+        }
+
+        /* Interactive Map */
+        .interactive-map-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            background-image: url('https://placehold.co/1000x500/ADD8E6/000000?text=City+Map+for+Delivery'); /* Placeholder map image */
+            background-size: cover;
+            background-position: center;
+        }
+
+        .map-location-pin {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            border: 3px solid white;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .map-location-pin:hover {
+            background-color: var(--secondary-color);
+            transform: translate(-50%, -50%) scale(1.2);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .location-info-box {
+            position: absolute;
+            background-color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 11;
+            white-space: nowrap;
+            display: none; /* Hidden by default */
+            transform: translate(-50%, -120%); /* Position above pin */
+        }
+
+        /* Custom message box styles */
+        .custom-alert-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1050;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+
+        .custom-alert-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .custom-alert-box {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .custom-alert-overlay.show .custom-alert-box {
+            transform: translateY(0);
+        }
+
+        .custom-alert-box h5 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .custom-alert-box p {
+            margin-bottom: 25px;
+        }
+
+        .custom-alert-box button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .custom-alert-box button:hover {
+            background-color: #3a5ccc;
+        }
+
+        /* Animations */
+        .animate__animated {
+            visibility: hidden; /* Hide elements initially for animation */
+        }
+        .animate__animated.animate__visible {
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+    <!-- Custom Alert Message Box -->
+    <div id="customAlert" class="custom-alert-overlay">
+        <div class="custom-alert-box">
+            <h5 id="customAlertTitle">Alert</h5>
+            <p id="customAlertMessage">This is a custom alert message.</p>
+            <button id="customAlertClose">OK</button>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav id="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-utensils me-2"></i>StreetVendor Analytics
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Price Analysis</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Leftover Exchange</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">Delivery Sharing</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Vendor Rating</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Interactive Maps</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">WhatsApp Integration</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Delivery Sharing Section -->
+    <section id="delivery-sharing" class="py-5">
+        <div class="container">
+            <div class="truck-header animate__animated animate__fadeInDown">
+                <h2 class="display-5 fw-bold">Share Deliveries, Cut Costs!</h2>
+                <p class="lead text-white-50">Connect with vendors on the same route to split delivery fees.</p>
+                <div class="truck-animation-container">
+                    <div class="truck-icon">
+                        <i class="fas fa-truck"></i>
+                        <i class="fas fa-carrot"></i>
+                        <i class="fas fa-apple-alt"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mb-5">
+                <h2 class="section-title animate__animated animate__fadeInDown animate__delay-1s">Find Delivery Partners</h2>
+                <p class="lead animate__animated animate__fadeInUp animate__delay-1s">Select your supplier and see nearby vendors sharing deliveries.</p>
+            </div>
+
+            <div class="row g-4 mb-5">
+                <div class="col-lg-5">
+                    <div class="card h-100 animate__animated animate__fadeInLeft animate__delay-2s">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary mb-3">Your Delivery Details</h5>
+                            <form id="deliveryForm">
+                                <div class="mb-3">
+                                    <label for="supplierSelect" class="form-label">Select Supplier</label>
+                                    <select class="form-select" id="supplierSelect">
+                                        <option value="City Wholesale">City Wholesale</option>
+                                        <option value="Fresh Farms">Fresh Farms</option>
+                                        <option value="Local Market">Local Market</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="deliveryDate" class="form-label">Preferred Delivery Date</label>
+                                    <input type="date" class="form-control" id="deliveryDate" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="deliveryTime" class="form-label">Preferred Time Slot</label>
+                                    <select class="form-select" id="deliveryTime">
+                                        <option value="morning">Morning (9 AM - 12 PM)</option>
+                                        <option value="afternoon">Afternoon (1 PM - 4 PM)</option>
+                                        <option value="evening">Evening (5 PM - 8 PM)</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Find Matches</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-7">
+                    <div class="card h-100 animate__animated animate__fadeInRight animate__delay-3s">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary mb-3">Interactive Delivery Map</h5>
+                            <div class="interactive-map-container" id="deliveryMap">
+                                <!-- Pins for locations -->
+                                <div class="map-location-pin" style="top: 35%; left: 20%;" data-name="Vendor A" data-items="Potatoes, Onions">A</div>
+                                <div class="map-location-pin" style="top: 55%; left: 45%;" data-name="Vendor B" data-items="Tomatoes, Flour">B</div>
+                                <div class="map-location-pin" style="top: 20%; left: 70%;" data-name="Vendor C" data-items="Cooking Oil">C</div>
+                                <div class="map-location-pin" style="top: 70%; left: 30%;" data-name="Vendor D" data-items="Garlic, Ginger">D</div>
+                                <div class="location-info-box" id="infoBox"></div>
+                            </div>
+                            <p class="text-muted text-center mt-3">
+                                <i class="fas fa-route me-1"></i> Hover over pins to see vendor details. Click to connect.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-12">
+                    <div class="card animate__animated animate__fadeInUp animate__delay-4s">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary mb-3">Matching Delivery Opportunities</h5>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Vendor Name</th>
+                                            <th>Supplier</th>
+                                            <th>Items</th>
+                                            <th>Distance from You</th>
+                                            <th>Estimated Savings</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="deliveryMatchesTableBody">
+                                        <tr>
+                                            <td>Vendor A</td>
+                                            <td>City Wholesale</td>
+                                            <td>Potatoes, Onions</td>
+                                            <td>1.5 km</td>
+                                            <td class="text-success">₹50</td>
+                                            <td><button class="btn btn-sm btn-outline-primary" data-vendor="Vendor A">Connect</button></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Vendor B</td>
+                                            <td>City Wholesale</td>
+                                            <td>Tomatoes, Flour</td>
+                                            <td>2.8 km</td>
+                                            <td class="text-success">₹40</td>
+                                            <td><button class="btn btn-sm btn-outline-primary" data-vendor="Vendor B">Connect</button></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Vendor C</td>
+                                            <td>Fresh Farms</td>
+                                            <td>Cooking Oil</td>
+                                            <td>0.9 km</td>
+                                            <td class="text-success">₹60</td>
+                                            <td><button class="btn btn-sm btn-outline-primary" data-vendor="Vendor C">Connect</button></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class="text-muted text-center mt-3">
+                                <i class="fas fa-handshake me-1"></i> Connect with other vendors to share delivery costs.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2023 StreetVendor Analytics. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Custom Alert Function
+        function showAlert(title, message) {
+            $('#customAlertTitle').text(title);
+            $('#customAlertMessage').text(message);
+            $('#customAlert').addClass('show');
+        }
+
+        $(document).ready(function() {
+            // Close custom alert
+            $('#customAlertClose').on('click', function() {
+                $('#customAlert').removeClass('show');
+            });
+
+            // Simulate map pin hover/click
+            $('.map-location-pin').on({
+                mouseenter: function() {
+                    const pin = $(this);
+                    const infoBox = $('#infoBox');
+                    const vendorName = pin.data('name');
+                    const items = pin.data('items');
+
+                    infoBox.html(`<strong>${vendorName}</strong><br>${items}`);
+                    infoBox.css({
+                        left: pin.position().left + (pin.width() / 2),
+                        top: pin.position().top
+                    }).fadeIn(100);
+                },
+                mouseleave: function() {
+                    $('#infoBox').fadeOut(100);
+                },
+                click: function() {
+                    const vendorName = $(this).data('name');
+                    showAlert('Connect with Vendor', `You are about to connect with ${vendorName} for delivery sharing.`);
+                }
+            });
+
+            // Handle "Find Matches" form submission
+            $('#deliveryForm').on('submit', function(e) {
+                e.preventDefault();
+                const supplier = $('#supplierSelect').val();
+                const date = $('#deliveryDate').val();
+                const time = $('#deliveryTime').val();
+
+                // Simulate fetching new matches based on input
+                const newMatches = [
+                    { name: 'Vendor X', supplier: supplier, items: 'Potatoes, Carrots', distance: '1.0 km', savings: '₹70' },
+                    { name: 'Vendor Y', supplier: supplier, items: 'Ginger, Garlic', distance: '2.2 km', savings: '₹45' }
+                ];
+
+                let tableHtml = '';
+                newMatches.forEach(match => {
+                    tableHtml += `
+                        <tr>
+                            <td>${match.name}</td>
+                            <td>${match.supplier}</td>
+                            <td>${match.items}</td>
+                            <td>${match.distance}</td>
+                            <td class="text-success">${match.savings}</td>
+                            <td><button class="btn btn-sm btn-outline-primary" data-vendor="${match.name}">Connect</button></td>
+                        </tr>
+                    `;
+                });
+                $('#deliveryMatchesTableBody').html(tableHtml);
+                showAlert('Matches Found', `Found new delivery sharing opportunities for ${supplier} on ${date}!`);
+            });
+
+            // Handle "Connect" button clicks in the table
+            $(document).on('click', '#deliveryMatchesTableBody .btn-outline-primary', function() {
+                const vendor = $(this).data('vendor');
+                showAlert('Connection Request Sent', `A request has been sent to ${vendor} to share delivery!`);
+            });
+
+            // Intersection Observer for animations
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        $(entry.target).addClass('animate__visible');
+                        $(entry.target).removeClass('animate__animated'); // Remove to prevent re-triggering
+                    } else {
+                        // Optionally remove 'animate__visible' if you want animations to replay on scroll back
+                        // $(entry.target).removeClass('animate__visible');
+                        // $(entry.target).addClass('animate__animated');
+                    }
+                });
+            }, { threshold: 0.1 }); // Trigger when 10% of the element is visible
+
+            // Observe all animated elements
+            $('.animate__animated').each(function() {
+                observer.observe(this);
+            });
+        });
+    </script>
+</body>
+</html>

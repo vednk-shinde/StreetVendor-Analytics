@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreetVendor Analytics | Vendor Rating</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #1cc88a;
+            --dark-color: #5a5c69;
+            --light-color: #f8f9fc;
+            --danger-color: #e74a3b;
+            --warning-color: #f6c23e;
+            --info-color: #36b9cc;
+        }
+
+        body {
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: #333;
+            padding-top: 72px;
+            background-color: var(--light-color);
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+        }
+
+        .section-title {
+            position: relative;
+            display: inline-block;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background-color: var(--primary-color);
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .rating-stars {
+            font-size: 2.5rem;
+            color: #ccc;
+            cursor: pointer;
+        }
+
+        .rating-stars .fas.fa-star {
+            color: var(--warning-color);
+        }
+
+        .rating-stars i {
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .rating-stars i:hover {
+            transform: scale(1.1);
+        }
+
+        /* Custom message box styles */
+        .custom-alert-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1050;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+
+        .custom-alert-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .custom-alert-box {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .custom-alert-overlay.show .custom-alert-box {
+            transform: translateY(0);
+        }
+
+        .custom-alert-box h5 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .custom-alert-box p {
+            margin-bottom: 25px;
+        }
+
+        .custom-alert-box button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .custom-alert-box button:hover {
+            background-color: #3a5ccc;
+        }
+
+        /* Animations */
+        .animate__animated {
+            visibility: hidden; /* Hide elements initially for animation */
+        }
+        .animate__animated.animate__visible {
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+    <!-- Custom Alert Message Box -->
+    <div id="customAlert" class="custom-alert-overlay">
+        <div class="custom-alert-box">
+            <h5 id="customAlertTitle">Alert</h5>
+            <p id="customAlertMessage">This is a custom alert message.</p>
+            <button id="customAlertClose">OK</button>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav id="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-utensils me-2"></i>StreetVendor Analytics
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Price Analysis</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Leftover Exchange</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Delivery Sharing</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">Vendor Rating</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Interactive Maps</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">WhatsApp Integration</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Vendor Rating Section -->
+    <section id="vendor-rating" class="py-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="section-title animate__animated animate__fadeInDown">Rate Your Suppliers</h2>
+                <p class="lead animate__animated animate__fadeInUp animate__delay-1s">Your feedback helps the community find the best suppliers.</p>
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card animate__animated animate__zoomIn animate__delay-2s">
+                        <div class="card-body p-5">
+                            <h4 class="card-title text-primary mb-4 text-center">Submit a New Rating</h4>
+                            <form id="ratingForm">
+                                <div class="mb-3">
+                                    <label for="supplierName" class="form-label">Supplier Name</label>
+                                    <select class="form-select" id="supplierName" required>
+                                        <option value="">Select a supplier...</option>
+                                        <option value="Fresh Farms">Fresh Farms</option>
+                                        <option value="Local Market">Local Market</option>
+                                        <option value="City Wholesale">City Wholesale</option>
+                                        <option value="Green Grocers">Green Grocers</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label d-block mb-2">Overall Rating</label>
+                                    <div class="rating-stars text-center" id="overallRating">
+                                        <i class="far fa-star" data-rating="1"></i>
+                                        <i class="far fa-star" data-rating="2"></i>
+                                        <i class="far fa-star" data-rating="3"></i>
+                                        <i class="far fa-star" data-rating="4"></i>
+                                        <i class="far fa-star" data-rating="5"></i>
+                                    </div>
+                                    <input type="hidden" id="overallRatingValue" name="overallRating" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="qualityRating" class="form-label">Quality of Produce</label>
+                                    <select class="form-select" id="qualityRating" required>
+                                        <option value="">Select rating...</option>
+                                        <option value="5">Excellent</option>
+                                        <option value="4">Good</option>
+                                        <option value="3">Average</option>
+                                        <option value="2">Below Average</option>
+                                        <option value="1">Poor</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="priceRating" class="form-label">Pricing Competitiveness</label>
+                                    <select class="form-select" id="priceRating" required>
+                                        <option value="">Select rating...</option>
+                                        <option value="5">Excellent</option>
+                                        <option value="4">Good</option>
+                                        <option value="3">Average</option>
+                                        <option value="2">Below Average</option>
+                                        <option value="1">Poor</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="deliveryRating" class="form-label">Delivery & Timeliness</label>
+                                    <select class="form-select" id="deliveryRating" required>
+                                        <option value="">Select rating...</option>
+                                        <option value="5">Excellent</option>
+                                        <option value="4">Good</option>
+                                        <option value="3">Average</option>
+                                        <option value="2">Below Average</option>
+                                        <option value="1">Poor</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="customerServiceRating" class="form-label">Customer Service</label>
+                                    <select class="form-select" id="customerServiceRating" required>
+                                        <option value="">Select rating...</option>
+                                        <option value="5">Excellent</option>
+                                        <option value="4">Good</option>
+                                        <option value="3">Average</option>
+                                        <option value="2">Below Average</option>
+                                        <option value="1">Poor</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="comments" class="form-label">Additional Comments</label>
+                                    <textarea class="form-control" id="comments" rows="4" placeholder="Share your detailed experience..." maxlength="500"></textarea>
+                                    <small class="form-text text-muted">Max 500 characters.</small>
+                                </div>
+
+                                <div class="form-check mb-4">
+                                    <input class="form-check-input" type="checkbox" id="recommendSupplier">
+                                    <label class="form-check-label" for="recommendSupplier">
+                                        Would you recommend this supplier to other vendors?
+                                    </label>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100 btn-lg">Submit Rating</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row justify-content-center mt-5">
+                <div class="col-lg-10">
+                    <h3 class="text-center section-title animate__animated animate__fadeInDown animate__delay-3s">Recent Supplier Reviews</h3>
+                    <div class="row g-4 mt-3">
+                        <div class="col-md-6">
+                            <div class="card h-100 animate__animated animate__fadeInUp animate__delay-4s">
+                                <div class="card-body">
+                                    <h5 class="card-title">Fresh Farms <span class="badge bg-warning float-end"><i class="fas fa-star"></i> 4.5</span></h5>
+                                    <p class="card-text text-muted">Reviewed by Rajesh K.</p>
+                                    <p class="mb-2">"Excellent quality potatoes and onions. Delivery is always on time. Highly recommend!"</p>
+                                    <small class="text-muted">Quality: <i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star-half-alt text-warning"></i> | Price: <i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i> | Delivery: <i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i></small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 animate__animated animate__fadeInUp animate__delay-5s">
+                                <div class="card-body">
+                                    <h5 class="card-title">City Wholesale <span class="badge bg-warning float-end"><i class="fas fa-star"></i> 5.0</span></h5>
+                                    <p class="card-text text-muted">Reviewed by Priya S.</p>
+                                    <p class="mb-2">"Best prices in the city, especially for bulk orders. Their customer service is top-notch. A must-use supplier!"</p>
+                                    <small class="text-muted">Quality: <i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i> | Price: <i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i> | Delivery: <i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2023 StreetVendor Analytics. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Custom Alert Function
+        function showAlert(title, message) {
+            $('#customAlertTitle').text(title);
+            $('#customAlertMessage').text(message);
+            $('#customAlert').addClass('show');
+        }
+
+        $(document).ready(function() {
+            // Close custom alert
+            $('#customAlertClose').on('click', function() {
+                $('#customAlert').removeClass('show');
+            });
+
+            // Overall Rating Star Interaction
+            $('#overallRating i').on('mouseover', function() {
+                const rating = $(this).data('rating');
+                $('#overallRating i').each(function(index) {
+                    if (index < rating) {
+                        $(this).removeClass('far').addClass('fas');
+                    } else {
+                        $(this).removeClass('fas').addClass('far');
+                    }
+                });
+            }).on('mouseout', function() {
+                const currentRating = $('#overallRatingValue').val();
+                $('#overallRating i').each(function(index) {
+                    if (index < currentRating) {
+                        $(this).removeClass('far').addClass('fas');
+                    } else {
+                        $(this).removeClass('fas').addClass('far');
+                    }
+                });
+            }).on('click', function() {
+                const rating = $(this).data('rating');
+                $('#overallRatingValue').val(rating);
+                showAlert('Rating Selected', `You selected ${rating} stars.`);
+            });
+
+            // Form Submission Handler
+            $('#ratingForm').on('submit', function(e) {
+                e.preventDefault();
+
+                const supplier = $('#supplierName').val();
+                const overallRating = $('#overallRatingValue').val();
+                const qualityRating = $('#qualityRating').val();
+                const priceRating = $('#priceRating').val();
+                const deliveryRating = $('#deliveryRating').val();
+                const customerServiceRating = $('#customerServiceRating').val();
+                const comments = $('#comments').val();
+                const recommend = $('#recommendSupplier').is(':checked');
+
+                if (!overallRating) {
+                    showAlert('Error', 'Please select an overall rating.');
+                    return;
+                }
+
+                // Simulate form submission
+                console.log({
+                    supplier,
+                    overallRating,
+                    qualityRating,
+                    priceRating,
+                    deliveryRating,
+                    customerServiceRating,
+                    comments,
+                    recommend
+                });
+
+                showAlert('Rating Submitted!', `Thank you for rating ${supplier} with ${overallRating} stars! Your feedback is valuable.`);
+                $(this).trigger('reset');
+                $('#overallRatingValue').val(''); // Clear hidden input
+                $('#overallRating i').removeClass('fas').addClass('far'); // Reset stars
+            });
+
+            // Intersection Observer for animations
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        $(entry.target).addClass('animate__visible');
+                        $(entry.target).removeClass('animate__animated'); // Remove to prevent re-triggering
+                    } else {
+                        // Optionally remove 'animate__visible' if you want animations to replay on scroll back
+                        // $(entry.target).removeClass('animate__visible');
+                        // $(entry.target).addClass('animate__animated');
+                    }
+                });
+            }, { threshold: 0.1 }); // Trigger when 10% of the element is visible
+
+            // Observe all animated elements
+            $('.animate__animated').each(function() {
+                observer.observe(this);
+            });
+        });
+    </script>
+</body>
+</html>

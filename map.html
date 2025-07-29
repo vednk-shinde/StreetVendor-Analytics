@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreetVendor Analytics | Interactive Maps</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #1cc88a;
+            --dark-color: #5a5c69;
+            --light-color: #f8f9fc;
+            --danger-color: #e74a3b;
+            --warning-color: #f6c23e;
+            --info-color: #36b9cc;
+        }
+
+        body {
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: #333;
+            padding-top: 72px;
+            background-color: var(--light-color);
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+        }
+
+        .section-title {
+            position: relative;
+            display: inline-block;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background-color: var(--primary-color);
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Truck Animation Header (Reused from Delivery Sharing) */
+        .truck-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .truck-header h2 {
+            color: white;
+            z-index: 2;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .truck-animation-container {
+            position: relative;
+            width: 100%;
+            height: 100px; /* Height for the animation track */
+            overflow: hidden;
+        }
+
+        .truck-icon {
+            position: absolute;
+            bottom: 0;
+            left: -100px; /* Start off-screen */
+            font-size: 60px;
+            color: #fff;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            animation: truckMove 15s linear infinite;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .truck-icon .fa-truck {
+            transform: scaleX(-1); /* Flip truck to face right initially */
+        }
+
+        .truck-icon .fa-carrot, .truck-icon .fa-apple-alt {
+            font-size: 30px;
+            color: var(--secondary-color);
+        }
+
+        @keyframes truckMove {
+            0% {
+                left: -100px;
+                transform: translateX(0);
+            }
+            49% {
+                left: calc(100% + 50px);
+                transform: translateX(0);
+            }
+            50% {
+                left: calc(100% + 50px);
+                transform: translateX(-100%) scaleX(-1); /* Flip and move back */
+            }
+            99% {
+                left: -100px;
+                transform: translateX(-100%) scaleX(-1);
+            }
+            100% {
+                left: -100px;
+                transform: translateX(0); /* Reset for next loop */
+            }
+        }
+
+        /* Interactive Map */
+        .interactive-map-container {
+            position: relative;
+            width: 100%;
+            height: 550px; /* Increased height for better map view */
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            background-image: url('https://placehold.co/1200x600/ADD8E6/000000?text=City+Vendor+Network+Map'); /* Placeholder map image */
+            background-size: cover;
+            background-position: center;
+        }
+
+        .map-marker {
+            position: absolute;
+            width: 45px;
+            height: 45px;
+            background-color: var(--primary-color);
+            border-radius: 50% 50% 50% 0; /* Tear drop shape */
+            transform: rotate(-45deg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            border: 3px solid white;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .map-marker i {
+            transform: rotate(45deg); /* Counter-rotate icon */
+            color: white;
+            font-size: 22px;
+        }
+
+        .map-marker:hover {
+            background-color: var(--secondary-color);
+            transform: rotate(-45deg) scale(1.2);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .map-marker.highlighted {
+            background-color: var(--info-color); /* Highlight color */
+            box-shadow: 0 0 25px rgba(54, 185, 204, 0.6);
+            z-index: 12;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: rotate(-45deg) scale(1); }
+            50% { transform: rotate(-45deg) scale(1.1); }
+            100% { transform: rotate(-45deg) scale(1); }
+        }
+
+        .marker-info-box {
+            position: absolute;
+            background-color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 11;
+            white-space: nowrap;
+            display: none; /* Hidden by default */
+            transform: translate(-50%, -120%); /* Position above pin */
+            font-size: 0.9rem;
+        }
+
+        /* Custom message box styles */
+        .custom-alert-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1050;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+
+        .custom-alert-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .custom-alert-box {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .custom-alert-overlay.show .custom-alert-box {
+            transform: translateY(0);
+        }
+
+        .custom-alert-box h5 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .custom-alert-box p {
+            margin-bottom: 25px;
+        }
+
+        .custom-alert-box button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .custom-alert-box button:hover {
+            background-color: #3a5ccc;
+        }
+
+        /* Animations */
+        .animate__animated {
+            visibility: hidden; /* Hide elements initially for animation */
+        }
+        .animate__animated.animate__visible {
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+    <!-- Custom Alert Message Box -->
+    <div id="customAlert" class="custom-alert-overlay">
+        <div class="custom-alert-box">
+            <h5 id="customAlertTitle">Alert</h5>
+            <p id="customAlertMessage">This is a custom alert message.</p>
+            <button id="customAlertClose">OK</button>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav id="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-utensils me-2"></i>StreetVendor Analytics
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Price Analysis</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Leftover Exchange</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Delivery Sharing</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Vendor Rating</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">Interactive Maps</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">WhatsApp Integration</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Interactive Maps Section -->
+    <section id="interactive-maps" class="py-5">
+        <div class="container">
+            <div class="truck-header animate__animated animate__fadeInDown">
+                <h2 class="display-5 fw-bold">Explore Our Vendor Network!</h2>
+                <p class="lead text-white-50">Find suppliers and fellow vendors near you.</p>
+                <div class="truck-animation-container">
+                    <div class="truck-icon">
+                        <i class="fas fa-truck"></i>
+                        <i class="fas fa-carrot"></i>
+                        <i class="fas fa-apple-alt"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mb-5">
+                <h2 class="section-title animate__animated animate__fadeInDown animate__delay-1s">Interactive Vendor & Supplier Map</h2>
+                <p class="lead animate__animated animate__fadeInUp animate__delay-1s">Click on locations to discover more about businesses in your area.</p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-12">
+                    <div class="card animate__animated animate__zoomIn animate__delay-2s">
+                        <div class="card-body p-4">
+                            <h5 class="card-title text-primary mb-3">Map View</h5>
+                            <div class="interactive-map-container" id="vendorMap">
+                                <!-- Example Markers (simulate different types) -->
+                                <div class="map-marker" style="top: 25%; left: 30%;" data-type="vendor" data-name="Rajesh's Samosa" data-specialty="Samosas, Chai" data-rating="4.5">
+                                    <i class="fas fa-utensils"></i>
+                                    <div class="marker-info-box"></div>
+                                </div>
+                                <div class="map-marker" style="top: 60%; left: 70%;" data-type="supplier" data-name="City Wholesale" data-specialty="Bulk Vegetables, Oils" data-rating="5.0">
+                                    <i class="fas fa-store"></i>
+                                    <div class="marker-info-box"></div>
+                                </div>
+                                <div class="map-marker" style="top: 40%; left: 50%;" data-type="vendor" data-name="Priya's Pani Puri" data-specialty="Pani Puri, Chaat" data-rating="4.0">
+                                    <i class="fas fa-utensils"></i>
+                                    <div class="marker-info-box"></div>
+                                </div>
+                                <div class="map-marker" style="top: 75%; left: 20%;" data-type="supplier" data-name="Fresh Farms" data-specialty="Fresh Produce" data-rating="4.2">
+                                    <i class="fas fa-store"></i>
+                                    <div class="marker-info-box"></div>
+                                </div>
+                                <div class="map-marker" style="top: 30%; left: 80%;" data-type="vendor" data-name="Vijay's Dosa Cart" data-specialty="Dosai, Idli" data-rating="4.8">
+                                    <i class="fas fa-utensils"></i>
+                                    <div class="marker-info-box"></div>
+                                </div>
+                            </div>
+                            <p class="text-muted text-center mt-3">
+                                <i class="fas fa-search-location me-1"></i> Hover over markers for details. Click to view full profile.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mt-5">
+                <div class="col-lg-6">
+                    <div class="card h-100 animate__animated animate__fadeInUp animate__delay-3s">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary mb-3">Filter Map View</h5>
+                            <form id="mapFilterForm">
+                                <div class="mb-3">
+                                    <label for="filterType" class="form-label">Show:</label>
+                                    <select class="form-select" id="filterType">
+                                        <option value="all">All (Vendors & Suppliers)</option>
+                                        <option value="vendor">Only Vendors</option>
+                                        <option value="supplier">Only Suppliers</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="minRating" class="form-label">Minimum Rating:</label>
+                                    <select class="form-select" id="minRating">
+                                        <option value="0">Any Rating</option>
+                                        <option value="3">3 Stars & Up</option>
+                                        <option value="4">4 Stars & Up</option>
+                                        <option value="4.5">4.5 Stars & Up</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card h-100 animate__animated animate__fadeInUp animate__delay-4s">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary mb-3">Nearby Locations</h5>
+                            <ul class="list-group" id="nearbyLocationsList">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Rajesh's Samosa <span class="badge bg-primary">Vendor</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    City Wholesale <span class="badge bg-success">Supplier</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Priya's Pani Puri <span class="badge bg-primary">Vendor</span>
+                                </li>
+                            </ul>
+                            <p class="text-muted text-center mt-3">
+                                <i class="fas fa-list me-1"></i> Quick list of businesses near your current location.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2023 StreetVendor Analytics. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Custom Alert Function
+        function showAlert(title, message) {
+            $('#customAlertTitle').text(title);
+            $('#customAlertMessage').text(message);
+            $('#customAlert').addClass('show');
+        }
+
+        $(document).ready(function() {
+            // Close custom alert
+            $('#customAlertClose').on('click', function() {
+                $('#customAlert').removeClass('show');
+            });
+
+            // Simulate map marker hover/click
+            $('.map-marker').on({
+                mouseenter: function() {
+                    const marker = $(this);
+                    const infoBox = marker.find('.marker-info-box');
+                    const type = marker.data('type');
+                    const name = marker.data('name');
+                    const specialty = marker.data('specialty');
+                    const rating = marker.data('rating');
+
+                    let content = `<strong>${name}</strong><br>`;
+                    content += `Type: ${type.charAt(0).toUpperCase() + type.slice(1)}<br>`;
+                    content += `Specialty: ${specialty}<br>`;
+                    content += `Rating: ${rating} <i class="fas fa-star text-warning"></i>`;
+
+                    infoBox.html(content);
+                    infoBox.fadeIn(100);
+                    marker.addClass('highlighted'); // Highlight on hover
+                },
+                mouseleave: function() {
+                    $(this).find('.marker-info-box').fadeOut(100);
+                    $(this).removeClass('highlighted'); // Remove highlight
+                },
+                click: function() {
+                    const name = $(this).data('name');
+                    showAlert('Profile View', `Viewing full profile for ${name}.`);
+                }
+            });
+
+            // Simulate map filtering
+            $('#mapFilterForm').on('submit', function(e) {
+                e.preventDefault();
+                const filterType = $('#filterType').val();
+                const minRating = parseFloat($('#minRating').val());
+
+                $('.map-marker').each(function() {
+                    const marker = $(this);
+                    const type = marker.data('type');
+                    const rating = parseFloat(marker.data('rating'));
+
+                    let show = true;
+
+                    if (filterType !== 'all' && type !== filterType) {
+                        show = false;
+                    }
+                    if (rating < minRating) {
+                        show = false;
+                    }
+
+                    if (show) {
+                        marker.show();
+                    } else {
+                        marker.hide();
+                    }
+                });
+                showAlert('Map Filtered', 'Map markers updated based on your selections.');
+            });
+
+            // Intersection Observer for animations
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        $(entry.target).addClass('animate__visible');
+                        $(entry.target).removeClass('animate__animated'); // Remove to prevent re-triggering
+                    } else {
+                        // Optionally remove 'animate__visible' if you want animations to replay on scroll back
+                        // $(entry.target).removeClass('animate__visible');
+                        // $(entry.target).addClass('animate__animated');
+                    }
+                });
+            }, { threshold: 0.1 }); // Trigger when 10% of the element is visible
+
+            // Observe all animated elements
+            $('.animate__animated').each(function() {
+                observer.observe(this);
+            });
+        });
+    </script>
+</body>
+</html>
